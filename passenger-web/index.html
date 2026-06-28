@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Co-Pilot Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-color: #09090b;
+        color: #ffffff;
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        overflow: hidden;
+      }
+      /* Hide Google Map UI clutter for a clean look */
+      .gmnoprint,
+      .gm-fullscreen-control {
+        display: none !important;
+      }
+      /* Style the Google Autocomplete Dropdown to match our dark theme */
+      .pac-container {
+        background-color: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 12px;
+        margin-top: 5px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        font-family: inherit;
+      }
+      .pac-item {
+        border-top: 1px solid #27272a;
+        padding: 12px;
+        color: #a1a1aa;
+        cursor: pointer;
+      }
+      .pac-item:hover {
+        background-color: #27272a;
+      }
+      .pac-item-query {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col h-screen relative">
+    <div
+      id="join-screen"
+      class="absolute inset-0 z-50 bg-zinc-950 flex flex-col justify-center items-center p-6 space-y-6"
+    >
+      <div class="text-center">
+        <h1
+          class="text-4xl font-extrabold text-emerald-400 tracking-tight mb-2"
+        >
+          Co-Pilot
+        </h1>
+        <p class="text-zinc-400 text-sm">Join the route and suggest stops</p>
+      </div>
+      <div
+        class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl"
+      >
+        <label
+          class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2"
+          >Your Name</label
+        >
+        <input
+          type="text"
+          id="passenger-name"
+          placeholder="e.g., Sarah"
+          class="w-full bg-zinc-950 text-white rounded-xl p-4 border border-zinc-800 focus:outline-none focus:border-emerald-500 transition text-lg mb-6"
+        />
+        <button
+          onclick="joinTrip()"
+          class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 px-6 rounded-xl transition text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+        >
+          Connect to Car
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="map"
+      class="absolute top-0 left-0 w-full h-[55%] z-0 bg-zinc-900"
+    ></div>
+
+    <div
+      id="dashboard-screen"
+      class="hidden absolute bottom-0 left-0 w-full h-[50%] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 rounded-t-3xl z-10 flex flex-col p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+    >
+      <div class="w-12 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <p
+            class="text-[10px] text-emerald-400 font-bold uppercase tracking-widest"
+          >
+            Live Session
+          </p>
+          <h2 id="room-display" class="text-lg font-bold text-white">
+            Room: ----
+          </h2>
+        </div>
+        <span class="flex h-3 w-3 relative">
+          <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+          ></span>
+          <span
+            class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"
+          ></span>
+        </span>
+      </div>
+
+      <div class="relative w-full mb-6">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search food, gas, scenic views..."
+          class="w-full bg-zinc-900 text-white rounded-2xl p-4 pl-12 border border-zinc-700 focus:outline-none focus:border-emerald-500 transition shadow-inner text-base"
+        />
+        <span class="absolute left-4 top-4 text-xl">🔍</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pb-4">
+        <p
+          class="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3"
+        >
+          Quick Detours
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <button
+            onclick="triggerQuickSearch('Gas Station')"
+            class="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-5 py-3 rounded-full hover:bg-zinc-800 transition shadow-sm"
+          >
+            ⛽ Gas
+          </button>
+          <button
+            onclick="triggerQuickSearch('Drive Thru')"
+            class="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-5 py-3 rounded-full hover:bg-zinc-800 transition shadow-sm"
+          >
+            🍔 Food
+          </button>
+          <button
+            onclick="triggerQuickSearch('Coffee')"
+            class="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-5 py-3 rounded-full hover:bg-zinc-800 transition shadow-sm"
+          >
+            ☕ Coffee
+          </button>
+          <button
+            onclick="triggerQuickSearch('Restroom')"
+            class="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm px-5 py-3 rounded-full hover:bg-zinc-800 transition shadow-sm"
+          >
+            🚽 Restroom
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let map, directionsService, directionsRenderer, autocomplete;
+      let passengerName = "";
+      let sessionId =
+        new URLSearchParams(window.location.search).get("room") || "";
+
+      if (sessionId)
+        document.getElementById("room-display").innerText =
+          `Room: ${sessionId.toUpperCase()}`;
+
+      // 1. Initialize Google Maps
+      function initMap() {
+        // Dark mode map styling
+        const darkMapStyle = [
+          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+          {
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#242f3e" }],
+          },
+          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+          {
+            featureType: "road",
+            elementType: "geometry",
+            stylers: [{ color: "#38414e" }],
+          },
+          {
+            featureType: "road",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#212a37" }],
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#17263c" }],
+          },
+        ];
+
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 5,
+          center: { lat: 39.8283, lng: -98.5795 }, // Center of US default
+          styles: darkMapStyle,
+          disableDefaultUI: true, // Removes zoom controls/streetview for clean look
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+          map: map,
+          polylineOptions: { strokeColor: "#10b981", strokeWeight: 5 }, // Emerald route line
+        });
+
+        setupAutocomplete();
+      }
+
+      // 2. Setup Native Google Autocomplete
+      function setupAutocomplete() {
+        const input = document.getElementById("search-input");
+
+        // Attach Google Autocomplete to the input field
+        autocomplete = new google.maps.places.Autocomplete(input, {
+          fields: ["place_id", "name", "geometry", "formatted_address"],
+        });
+        autocomplete.bindTo("bounds", map); // Bias results to what's currently on the map
+
+        // Listen for when the user selects a place from the dropdown
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry || !place.geometry.location) return;
+
+          // Briefly pan the map to show the passenger the location they selected
+          map.panTo(place.geometry.location);
+          map.setZoom(14);
+
+          // Ask for confirmation to send
+          if (confirm(`Send "${place.name}" to the driver's screen?`)) {
+            sendSuggestion(place.place_id, place.name, place.geometry.location);
+            input.value = ""; // Clear input after sending
+          }
+        });
+      }
+
+      function triggerQuickSearch(term) {
+        const input = document.getElementById("search-input");
+        input.value = term;
+        input.focus();
+        // Google Autocomplete will automatically drop down suggestions based on this term
+      }
+
+      function joinTrip() {
+        const nameInput = document
+          .getElementById("passenger-name")
+          .value.trim();
+        if (!nameInput) return alert("Please enter your name!");
+
+        passengerName = nameInput;
+        document.getElementById("join-screen").classList.add("hidden");
+        document.getElementById("dashboard-screen").classList.remove("hidden");
+
+        // TODO: Fetch real origin/destination from Supabase based on SessionId
+        // For now, we mock drawing the route so you can see it working:
+        mockDrawRoute();
+      }
+
+      function mockDrawRoute() {
+        // Drawing a sample route (e.g., Los Angeles to Las Vegas)
+        directionsService.route(
+          {
+            origin: "Los Angeles, CA",
+            destination: "Las Vegas, NV",
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (response, status) => {
+            if (status === "OK") {
+              directionsRenderer.setDirections(response);
+            } else {
+              console.error("Directions request failed due to " + status);
+            }
+          },
+        );
+      }
+
+      function sendSuggestion(placeId, name, location) {
+        console.log(
+          `Sending to DB: ${name} at ${location.lat()}, ${location.lng()}`,
+        );
+        alert(`✅ Sent "${name}" to the driver!`);
+
+        // TODO: Next step is wiring this up to Supabase to insert into the 'stops' table
+      }
+    </script>
+
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBFFTqwj6jO-g3ZKSi_fxDxH4UGBGWon1U&libraries=places&callback=initMap"
+      async
+      defer
+    ></script>
+  </body>
+</html>
