@@ -64,6 +64,7 @@ export default function DashboardScreen() {
       return;
     }
 
+    console.log("🎯 Dashboard loaded with sessionId:", sessionId);
     fetchPendingStops().finally(() => setLoading(false));
 
     const channel = supabase
@@ -77,8 +78,10 @@ export default function DashboardScreen() {
           filter: `session_id=eq.${sessionId}`,
         },
         (payload) => {
+          console.log("📡 Real-time payload received:", payload);
           if (payload.eventType === "INSERT") {
             const row = payload.new as Stop;
+            console.log("✅ INSERT event - row:", row);
             if (row.status === "pending") {
               setStops((prev) =>
                 prev.some((s) => s.id === row.id) ? prev : [...prev, row],
@@ -89,6 +92,7 @@ export default function DashboardScreen() {
 
           if (payload.eventType === "UPDATE") {
             const row = payload.new as Stop;
+            console.log("✏️ UPDATE event - row:", row);
             if (row.status === "pending") {
               setStops((prev) => {
                 const exists = prev.some((s) => s.id === row.id);
@@ -104,11 +108,19 @@ export default function DashboardScreen() {
 
           if (payload.eventType === "DELETE") {
             const row = payload.old as { id: string };
+            console.log("🗑️ DELETE event - row:", row);
             setStops((prev) => prev.filter((s) => s.id !== row.id));
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("🔌 Subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("✅ Successfully subscribed to real-time channel");
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("❌ Channel subscription error");
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

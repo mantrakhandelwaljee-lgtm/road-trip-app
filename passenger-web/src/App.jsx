@@ -43,6 +43,7 @@ export default function App() {
   }, []);
 
   const joinSession = async (pin) => {
+    console.log("🔍 Joining session with PIN:", pin);
     // 2. Fetch the trip destination from Supabase
     const { data, error } = await supabase
       .from("sessions")
@@ -51,10 +52,11 @@ export default function App() {
       .single();
 
     if (data) {
+      console.log("✅ Session found:", data);
       setSession(data);
       getUserLocation(data.destination);
     } else {
-      console.error("Session not found", error);
+      console.error("❌ Session not found", error);
       setLoading(false);
     }
   };
@@ -166,14 +168,20 @@ export default function App() {
       const lat = place.geometry.location.lat();
       const lng = place.geometry.location.lng();
 
+      console.log("🚀 Sending stop suggestion:", { session_id: session.id, place_name: placeName });
+
       // 6. Send the suggestion directly to Supabase
-      const { error } = await supabase.from("stops").insert({
+      const { data, error } = await supabase.from("stops").insert({
         session_id: session.id,
         place_name: placeName,
         status: "pending",
-      });
+      }).select();
 
-      if (!error) {
+      if (error) {
+        console.error("❌ Failed to insert stop:", error);
+        alert(`Failed to send suggestion: ${error.message}`);
+      } else {
+        console.log("✅ Successfully inserted stop:", data);
         alert(`Sent "${placeName}" to the driver for approval!`);
         // Clear the input field
         document.getElementById("autocomplete-input").value = "";
