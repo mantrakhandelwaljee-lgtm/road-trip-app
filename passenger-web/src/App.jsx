@@ -138,7 +138,7 @@ export default function App() {
 
     // The Magic: Real-time listener for the passenger
     const stopSubscription = supabase
-      .channel("passenger-stops")
+      .channel(`stops:${session.id}`)
       .on(
         "postgres_changes",
         {
