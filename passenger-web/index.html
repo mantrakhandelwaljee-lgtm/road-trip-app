@@ -169,12 +169,39 @@
     <script>
       let map, directionsService, directionsRenderer, autocomplete;
       let passengerName = "";
-      let sessionId =
+      let sessionId = "";
+      let sessionPin =
         new URLSearchParams(window.location.search).get("room") || "";
 
-      if (sessionId)
+      if (sessionPin)
         document.getElementById("room-display").innerText =
-          `Room: ${sessionId.toUpperCase()}`;
+          `Room: ${sessionPin.toUpperCase()}`;
+
+      // Fetch session UUID from Supabase using PIN
+      async function fetchSessionByPin() {
+        if (!sessionPin) return;
+        
+        console.log("🔍 Fetching session for PIN:", sessionPin);
+        const { data, error } = await window.supabase
+          .from("sessions")
+          .select("*")
+          .eq("pin", sessionPin)
+          .single();
+
+        if (error) {
+          console.error("❌ Failed to fetch session:", error);
+          alert("Invalid room PIN");
+          return;
+        }
+
+        if (data) {
+          sessionId = data.id;
+          console.log("✅ Session found:", sessionId);
+        }
+      }
+
+      // Call this when page loads
+      fetchSessionByPin();
 
       // 1. Initialize Google Maps
       function initMap() {
