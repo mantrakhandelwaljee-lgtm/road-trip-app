@@ -45,6 +45,13 @@
         font-weight: 500;
       }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // Initialize Supabase
+      const supabaseUrl = 'https://pktloysodgemengfyxjt.supabase.co';
+      const supabaseAnonKey = 'sb_publishable_6wu4536Kr7evPtWcmsElYQ_1TMxwcq8';
+      const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+    </script>
   </head>
   <body class="flex flex-col h-screen relative">
     <div
@@ -299,13 +306,6 @@
       }
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      // Initialize Supabase
-      const supabaseUrl = 'https://pktloysodgemengfyxjt.supabase.co';
-      const supabaseAnonKey = 'sb_publishable_6wu4536Kr7evPtWcmsElYQ_1TMxwcq8';
-      const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-    </script>
     <script
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBFFTqwj6jO-g3ZKSi_fxDxH4UGBGWon1U&libraries=places&callback=initMap"
       async
