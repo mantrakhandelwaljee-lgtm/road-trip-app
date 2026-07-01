@@ -300,7 +300,8 @@
 
         if (error) {
           console.error("❌ Failed to insert stop:", error);
-          alert(`Failed to send suggestion: ${error.message}`);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          alert(`Failed to send suggestion: ${error.message}\nDetails: ${JSON.stringify(error)}`);
         } else {
           console.log("✅ Successfully inserted stop:", data);
           alert(`✅ Sent "${name}" to the driver!`);
