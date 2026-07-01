@@ -45,12 +45,13 @@
         font-weight: 500;
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script>
       // Initialize Supabase
       const supabaseUrl = 'https://pktloysodgemengfyxjt.supabase.co';
       const supabaseAnonKey = 'sb_publishable_6wu4536Kr7evPtWcmsElYQ_1TMxwcq8';
-      const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+      window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+      console.log('✅ Supabase initialized:', window.supabase);
     </script>
   </head>
   <body class="flex flex-col h-screen relative">
@@ -289,8 +290,9 @@
         console.log(
           `🚀 Sending stop suggestion:`, { sessionId, place_name: name }
         );
+        console.log('Supabase object:', window.supabase);
 
-        const { data, error } = await supabase.from("stops").insert({
+        const { data, error } = await window.supabase.from("stops").insert({
           session_id: sessionId,
           place_name: name,
           status: "pending",
