@@ -10,6 +10,6 @@ export type Waypoint = {
   id: string;
   session_id: string;
   suggested_by: string;
-  place_name: string;
+  description: string;
   status: WaypointStatus;
 };

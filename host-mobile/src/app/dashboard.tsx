@@ -17,9 +17,9 @@ import type { Waypoint } from "@/types/database";
 
 const PASSENGER_WEB_URL =
   process.env.EXPO_PUBLIC_PASSENGER_WEB_URL ??
-  "road-trip-app-vpb-git-c2eab7-mantrakhandelwaljee-lgtms-projects.vercel.app";
+  "https://road-trip-app-vpb-git-c2eab7-mantrakhandelwaljee-lgtms-projects.vercel.app/";
 
-type Stop = Pick<Waypoint, "id" | "place_name" | "status">;
+type Stop = Pick<Waypoint, "id" | "description" | "status">;
 
 function param(value: string | string[] | undefined): string {
   return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
@@ -46,7 +46,7 @@ export default function DashboardScreen() {
 
     const { data, error } = await supabase
       .from("stops")
-      .select("id, place_name, status")
+      .select("id, description, status")
       .eq("session_id", sessionId)
       .eq("status", "pending");
 
@@ -158,7 +158,7 @@ export default function DashboardScreen() {
   const renderStop = ({ item }: { item: Stop }) => (
     <View style={styles.stopCard}>
       <Text style={styles.stopName} numberOfLines={2}>
-        {item.place_name}
+        {item.description}
       </Text>
       <View style={styles.stopActions}>
         <TouchableOpacity
