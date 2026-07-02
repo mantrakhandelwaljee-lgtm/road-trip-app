@@ -17,7 +17,7 @@ import type { Waypoint } from "@/types/database";
 
 const PASSENGER_WEB_URL =
   process.env.EXPO_PUBLIC_PASSENGER_WEB_URL ??
-  "https://road-trip-app-vpb4.vercel.app/";
+  "road-trip-app-vpb-git-c2eab7-mantrakhandelwaljee-lgtms-projects.vercel.app";
 
 type Stop = Pick<Waypoint, "id" | "place_name" | "status">;
 

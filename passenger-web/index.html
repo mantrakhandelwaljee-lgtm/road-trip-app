@@ -315,13 +315,13 @@
 
       async function sendSuggestion(placeId, name, location) {
         console.log(
-          `🚀 Sending stop suggestion:`, { sessionId, place_name: name }
+          `🚀 Sending stop suggestion:`, { sessionId, description: name }
         );
         console.log('Supabase object:', window.supabase);
 
         const { data, error } = await window.supabase.from("stops").insert({
           session_id: sessionId,
-          place_name: name,
+          description: name,
           status: "pending",
         }).select();
 
